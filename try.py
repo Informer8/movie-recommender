@@ -63,8 +63,6 @@ print(users_fav_movies.T)
 users_fav_movies.to_csv('E:/filtered_ratings.csv')
 
 def moviesListForUsers(users, users_data):
-    # users = a list of users IDs
-    # users_data = a dataframe of users favourite movies or users watched movies
     users_movies_list = []
     for user in users:
         users_movies_list.append(str(list(users_data[users_data['userId'] == user]['movieId'])).split('[')[1].split(']')[0])
@@ -78,9 +76,6 @@ print('Movies list for', len(users_movies_list), ' users')
 print('A list of first 10 users favourite movies: \n', users_movies_list[:10]) 
 
 def prepSparseMatrix(list_of_str):
-    # list_of_str = A list, which contain strings of users favourite movies separate by comma ",".
-    # It will return us sparse matrix and feature names on which sparse matrix is defined 
-    # i.e. name of movies in the same order as the column of sparse matrix
     cv = CountVectorizer(token_pattern = r'[^\,\ ]+', lowercase = False)
     sparseMatrix = cv.fit_transform(list_of_str)
     return sparseMatrix.toarray(), cv.get_feature_names()
@@ -167,23 +162,15 @@ def getMoviesOfUser(user_id, users_data):
     return list(users_data[users_data['userId'] == user_id]['movieId'])
 	
 def fixClusters(clusters_movies_dataframes, users_cluster_dataframe, users_data, smallest_cluster_size = 11):
-    # clusters_movies_dataframes: will be a list which will contain each dataframes of each cluster movies
-    # users_cluster_dataframe: will be a dataframe which contain users IDs and their cluster no.
-    # smallest_cluster_size: is a smallest cluster size which we want for a cluster to not remove
     each_cluster_movies = clusters_movies_dataframes.copy()
     users_cluster = users_cluster_dataframe.copy()
-    # Let convert dataframe in each_cluster_movies to list with containing only movies IDs
     each_cluster_movies_list = [list(df['movieId']) for df in each_cluster_movies]
-    # First we will prepair a list which containt lists of users in each cluster -> [[Cluster 0 Users], [Cluster 1 Users], ... ,[Cluster N Users]] 
     usersInClusters = list()
     total_clusters = len(each_cluster_movies)
     for i in range(total_clusters):
         usersInClusters.append(list(users_cluster[users_cluster['Cluster'] == i]['userId']))
     uncategorizedUsers = list()
     i = 0
-    # Now we will remove small clusters and put their users into another list named "uncategorizedUsers"
-    # Also when we will remove a cluster, then we have also bring back cluster numbers of users which comes after deleting cluster
-    # E.g. if we have deleted cluster 4 then their will be users whose clusters will be 5,6,7,..,N. So, we'll bring back those users cluster number to 4,5,6,...,N-1.
     for j in range(total_clusters):
         if len(usersInClusters[i]) < smallest_cluster_size:
             uncategorizedUsers.extend(usersInClusters[i])
@@ -297,12 +284,10 @@ class userRequestedFor:
     def __init__(self, user_id, users_data):
         self.users_data = users_data.copy()
         self.user_id = user_id
-        # Find User Cluster
         users_cluster = saveLoadFiles().loadUsersClusters()
         self.user_cluster = int(users_cluster[users_cluster['userId'] == self.user_id]['Cluster'])
-        # Load User Cluster Movies Dataframe
         self.movies_list = saveLoadFiles().loadClusterMoviesDataset()
-        self.cluster_movies = self.movies_list[self.user_cluster] # dataframe
+        self.cluster_movies = self.movies_list[self.user_cluster]
         self.cluster_movies_list = list(self.cluster_movies['movieId']) # list
     def updatedFavouriteMoviesList(self, new_movie_Id):
         if new_movie_Id in self.cluster_movies_list:
@@ -344,12 +329,8 @@ print("User History: ")
 for movie in userMovies:
     title = list(movies_metadata.loc[movies_metadata['id'] == str(movie)]['original_title'])
     if title != []:
-        print('Movie title: ', title)#print('Movie title: ', title, ', Genres: [', end = '')
-        genres = ast.literal_eval(movies_metadata.loc[movies_metadata['id'] == str(movie)]['genres'].values[0].split('[')[1].split(']')[0])
-        #for genre in genres:
-            #print(genre['name'], ', ', end = '')
+        print('Movie title: ', title)
         print(end = '\b\b')
-        #print('') 
 		
 print()		
 userRecommendations = userRequestedFor(2, users_fav_movies).recommendMostFavouriteMovies()[1]
@@ -357,9 +338,4 @@ print("Recommended Movies: ")
 for movie in userRecommendations[:15]:
     title = list(movies_metadata.loc[movies_metadata['id'] == str(movie)]['original_title'])
     if title != []:
-        print('Movie title: ', title)#print('Movie title: ', title, ', Genres: [', end = '')
-        genres = ast.literal_eval(movies_metadata.loc[movies_metadata['id'] == str(movie)]['genres'].values[0].split('[')[1].split(']')[0])
-        #for genre in genres:
-            #print(genre['name'], ', ', end = '')
-        #print(']', end = '')
-        #print() 
+        print('Movie title: ', title)
